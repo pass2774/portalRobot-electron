@@ -1,0 +1,15 @@
+{
+  "name": "electron_portalrobot",
+  "version": "1.0.0",
+  "description": "operating robot system through electron",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "author": "Portal301 Joonhwa Choi",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^21.3.0"
+  }
+}
