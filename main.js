@@ -1,10 +1,101 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 let {spawn,exec} = require('node:child_process');
-let exec_cmdSocket = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\cmd_socket\\cmd_socket.exe";
-let exec_initProfile = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\init_profile\\init_profile.exe";
-let exec_runRobot = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\dxl_robot_gv\\dxl_robot_gv.exe";
+// let exec_cmdSocket = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\cmd_socket\\cmd_socket.exe";
+// let exec_initProfile = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\init_profile\\init_profile.exe";
+// let exec_scanPorts = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\scan_ports\\scan_ports.exe";
+// let exec_runRobot = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\dxl_robot_gv\\dxl_robot_gv.exe";
+
+let exec_cmdSocket = ".\\python\\dist\\cmd_socket\\cmd_socket.exe";
+let exec_initProfile = ".\\python\\dist\\init_profile\\init_profile.exe";
+let exec_scanPorts = ".\\python\\dist\\scan_ports\\scan_ports.exe";
+let exec_runRobot = ".\\python\\dist\\dxl_robot_gv\\dxl_robot_gv.exe";
+let exec_calibRobot = ".\\python\\dist\\calib_robot\\calib_robot.exe";
+
+
 let parameter = [""];
+
+const fs = require('fs');
+
+
+
+
+// ipcMain.on('channel_name',(event, payload)=>{
+//     console.log(payload);
+//     event.reply('ipc_renderer_channel_name','message');
+// })
+
+const out = fs.openSync('./out.log', 'w');
+const err = fs.openSync('./out.log', 'w');
+
+let StringDecoder=require('string_decoder').StringDecoder;
+let decoder = new StringDecoder('utf8');
+
+function spawnChildProcess(executablePath,tag,stdoutCallback=null,stderrCallback=null){
+    const subprocess = spawn(executablePath,[],{
+        stdio:"pipe"
+    });
+    subprocess.stdout.setEncoding('utf8');
+    subprocess.stderr.setEncoding('utf8');
+
+    if(stdoutCallback!=null){
+        subprocess.stdout.on("data",stdoutCallback);
+    }else{
+        subprocess.stdout.on("data",(data)=>{
+            console.log(`:::${tag} stdout:::\n${data}`);
+        })
+    }
+
+    if(stderrCallback!=null){
+        subprocess.stderr.on("data",stderrCallback);    
+    }else{
+        subprocess.stderr.on("data",(data)=>{
+            console.log(`:::${tag} stderr:::\n${data}`);
+        })    
+    }
+    
+    subprocess.on('close',(code)=>{
+        console.log(`child process[${tag}] exited with code ${code}`);
+    })    
+}
+
+function handleStdoutCmdSocket(data){
+    const packet = data.toString();
+    console.log(`===stdout handling data===\n${packet}}`);
+    if(packet.startsWith('SIG: ')){
+        const obj = JSON.parse(packet.slice(5));
+        if(obj["type"] === "ModeRobot"){
+            if(obj["mode"] === "config"){
+                // config robot type, such as ... # of the motors, robot type, etc.
+            }else if(obj["mode"] === "calibration"){
+                spawnChildProcess(exec_calibRobot,"calibRobot");
+            }else if(obj["mode"] === "operation"){
+                spawnChildProcess(exec_runRobot,"runRobot");
+            }else if(obj["mode"] === "auto"){
+                // need to block socket command (not to shut down the cmd_socket program)
+            }else if(obj["mode"] === "terminate"){
+
+            }
+        }
+    }else if(packet.startsWith('CMD: ')){
+        // const obj = JSON.parse(packet.slice(5));
+        // console.log("obj:", obj)
+        // console.log("arm:",obj["arm"])
+    }
+}
+
+spawnChildProcess(exec_initProfile,"initProfile");
+spawnChildProcess(exec_scanPorts,"scanPorts");
+spawnChildProcess(exec_cmdSocket,"cmdSocket",stdoutCallback=handleStdoutCmdSocket,stderrCallback=null);
+
+
+
+
+
+
+
+
+
 
 function handleSetTitle (event, title) {
     const webContents = event.sender
@@ -25,9 +116,19 @@ const createWindow = () => {
     //     const win = BrowserWindow.fromWebContents(webContents)
     //     win.setTitle(title)
     //   })
-
-
     win.loadFile('index.html');
+
+    win.webContents.on('did-finish-load', (evt)=>{
+        fs.readFile('./python/src/config/ServiceProfile.txt', 'utf8' , (err, data) => {
+            if (err) {
+              console.error(err)
+              return
+            }
+            win.webContents.send('fromMain', data);
+        })
+
+
+    })
 };
  
 app.whenReady().then(() => {
@@ -43,76 +144,17 @@ app.on('window-all-closed', () => {
 });
 
 
-// ipcMain.on('channel_name',(event, payload)=>{
-//     console.log(payload);
-//     event.reply('ipc_renderer_channel_name','message');
-// })
 
-const fs = require('fs');
-const out = fs.openSync('./out.log', 'w');
-const err = fs.openSync('./out.log', 'w');
 
-let StringDecoder=require('string_decoder').StringDecoder;
-let decoder = new StringDecoder('utf8');
 
-function spawnChildProcess(executablePath,tag,stdioCallback=null){
-    const subprocess = spawn(executablePath,[]);
-    subprocess.stdout.setEncoding('utf8');
-    subprocess.stderr.setEncoding('utf8');
 
-    if(stdioCallback!=null){
-        subprocess.stdout.on("data",stdioCallback);
-        subprocess.stderr.on("data",stdioCallback);    
-    }else{
-        subprocess.stdout.on("data",(data)=>{
-            console.log(`:::${tag} stdout:::\n${data}`);
-        })
-        subprocess.stderr.on("data",(data)=>{
-            console.log(`:::${tag} stderr:::\n${data}`);
-        })    
-    }
-    
-    subprocess.on('close',(code)=>{
-        console.log(`child process[${tag}] exited with code ${code}`);
-    })    
-}
-function handleCmdSocket(data){
-    console.log(`===handling data===\n${data}`);
-   
-    console.log('parsing');
-    if(data.startsWith('Received event')){
-        console.log("starting with 'cmd:'")
-        // console.log(JSON.parse(data))
-    }
-}
 
-spawnChildProcess(exec_initProfile,"initProfile");
-// spawnChildProcess(exec_cmdSocket,"cmdSocket",handleCmdSocket);
-// spawnChildProcess(exec_calibRobot,"calibRobot");
-
-filepath="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm"
-file="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\cmd_socket.py"
-const child = spawn("poetry",["run","python","cmd_socket.py"],{
-    cwd:filepath,
-    stdio:"pipe",
-    maxBuffer:1024*10
-})
-
-// const subprocess = spawn(exec_cmdSocket,[],{
+// filepath="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm"
+// file="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\cmd_socket.py"
+// const child = spawn("poetry",["run","python","cmd_socket.py"],{
+//     cwd:filepath,
 //     stdio:"pipe"
 // })
-child.stdout.on("data",buffer=>{
-    console.log(buffer.toString());
-})
-child.stderr.on("data",buffer=>{
-    console.log(buffer.toString());
-})
-child.stdout.on("error",buffer=>{
-    console.log(buffer);
-})
-child.on('close',(code)=>{
-    console.log(`child process exited with code ${code}`);
-})    
 
 // filepath="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm"
 // file="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\cmd_socket.py"
@@ -136,4 +178,3 @@ child.on('close',(code)=>{
 // })    
 
 
-// spawnChildProcess(exec_runRobot,"runRobot");
