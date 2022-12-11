@@ -30,6 +30,21 @@ let sdpConstraints = {
 };
 
 
+let _serviceProfile;
+
+
+window.onload = () => {
+  document.getElementById('text-box').textContent = "the message from main.js will be displayed here"
+
+  window.api.receive('fromMain', (header,msg) => {
+    if(header === "service-profile"){
+      // startStream (msg);
+      _serviceProfile = msg;  
+    }
+  })
+}
+
+
 /////////////////////////////////////////////
 let localVideo = document.querySelector('#localVideo');
 let remoteVideo = document.querySelector('#remoteVideo');
@@ -39,6 +54,54 @@ const socket = io("https://api.portal301.com/",{
   transports: ["websocket"] // HTTP long-polling is disabled
   }
 );
+
+
+
+function startStream (){
+  let serviceProfile = _serviceProfile;
+  serviceProfile.state["socketId"]=socket.id;
+  serviceProfile.state["roomId"]="room:"+socket.id;
+  document.getElementById('text-box').textContent = JSON.stringify(serviceProfile);
+
+  socket.emit('Start_Service', JSON.stringify(serviceProfile));
+  navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: true
+  })
+  .then(gotStream)
+  .catch(function(e) {
+    alert('getUserMedia() error: ' + e.name);
+  });
+}
+
+
+
+// function startStream (serviceProfile){
+//   let serviceProfile = new Object();
+//   serviceProfile.sid = socket.id;
+//   serviceProfile.type = 'device1';
+//   serviceProfile.description = 'RobotCam';
+//   serviceProfile.owner = 'owner1';
+//   serviceProfile.nickname = 'RobotCam_0001';
+//   serviceProfile.contents = {sensor:'{sensor1,sensor2}',stream:'{video,audio}'};
+//   serviceProfile.state = {socketId:socket.id,roomId:'room:'+socket.id }
+
+//   serviceProfile.state.socketId=socket.id;
+//   serviceProfile.state.roomId="room:"+socket.id;
+//   document.getElementById('text-box').textContent = JSON.stringify(serviceProfile);
+
+//   socket.emit('Start_Service', JSON.stringify(serviceProfile));
+//   navigator.mediaDevices.getUserMedia({
+//     audio: false,
+//     video: true
+//   })
+//   .then(gotStream)
+//   .catch(function(e) {
+//     alert('getUserMedia() error: ' + e.name);
+//   });
+// }
+
+
 
 
 let controlPanel = document.querySelector('#controlPanel');
@@ -52,43 +115,21 @@ SltServiceList.addEventListener("onchange",function(){
   
 })
 
+// let BtnStartStream = document.createElement('button');
+// BtnStartStream.id='btn_start_stream'
+// BtnStartStream.innerText='Start Streaming'
+// BtnStartStream.addEventListener("click",startStream);
+// controlPanel.appendChild(BtnStartStream);
 
-let BtnStartStream = document.createElement('button');
 
-BtnStartStream.id='btn_start_stream'
-BtnStartStream.innerText='Start Streaming'
-document.body.appendChild(BtnStartStream);
-BtnStartStream.addEventListener("click", function() {
-  let serviceProfile = new Object();
-  serviceProfile.sid = socket.id;
-  serviceProfile.type = 'device1';
-  serviceProfile.description = 'RobotCam';
-  serviceProfile.owner = 'owner1';
-  serviceProfile.nickname = 'RobotCam_0000';
-  // obj.contents = {stream:'{video,audio}'};
-  serviceProfile.contents = {sensor:'{sensor1,sensor2}',stream:'{video,audio}'};
-  serviceProfile.state = {socketId:socket.id,roomId:'room:'+socket.id }
-  socket.emit('Start_Service', JSON.stringify(serviceProfile));
-  navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: true
-  })
-  .then(gotStream)
-  .catch(function(e) {
-    alert('getUserMedia() error: ' + e.name);
-  });
-})
-
-var BtnAudioToggle = document.createElement('button');
+let BtnAudioToggle = document.createElement('button');
 BtnAudioToggle.id='btn_audio_toggle'
 BtnAudioToggle.innerText='My Audio On/Off'
 document.body.appendChild(BtnAudioToggle);
 BtnAudioToggle.addEventListener("click", function() {
   localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
-
 })
 
-controlPanel.appendChild(BtnStartStream);
 controlPanel.appendChild(BtnAudioToggle);
 controlPanel.appendChild(SltServiceList);
 
@@ -103,10 +144,14 @@ function toggleMic() {
   }
 }  
 
-let query = [];
-query.push({header:'ServiceList',filter:{}});
-console.log(query);
-socket.emit("q_service", query); 
+socket.on("connect",()=>{
+  let query = [];
+  query.push({header:'ServiceList',filter:{}});
+  console.log(query);
+  socket.emit("q_service", query); 
+  startStream ();
+})
+
 
 socket.on('PING', function(msg){
   console.log("ping from server with msg:"+msg);
@@ -179,7 +224,7 @@ socket.on('msg-v1', function(packet) {
     } else if (message.type === 'answer') {
       pcs[packet.from].setRemoteDescription(new RTCSessionDescription(message));
     } else if (message.type === 'candidate') {
-      var candidate = new RTCIceCandidate({
+      let candidate = new RTCIceCandidate({
         sdpMLineIndex: message.label,
         candidate: message.candidate
       });

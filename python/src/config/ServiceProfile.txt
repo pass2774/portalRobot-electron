@@ -1,19 +1,63 @@
 {
-    "sid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-VI0R",
-    "type": "ROBOT",
-    "nickname": "RobotArm_0000",
-    "description": "RobotArm",
-    "contents": {
-        "stream": [
+    "cluster": {
+        "sid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD",
+        "spw": "0000",
+        "type": "CLUSTER",
+        "nickname": "plantWatcher-0000",
+        "description": "service-cluster-plantWatcher",
+        "owner": "PORTAL301",
+        "contents": {
+            "ch0": [
+                "3-DOF robot arm",
+                "1-DOF dolly"
+            ],
+            "ch1": [
+                "video"
+            ]
+        },
+        "state": {
+            "ch0": {
+                "sid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD:0"
+            },
+            "ch1": {
+                "sid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD:1"
+            }
+        }
+    },
+    "robot": {
+        "sid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD:0",
+        "spw": null,
+        "type": "ROBOT",
+        "nickname": "plantWatcher-0000:ROBOT",
+        "description": "dolly and arm",
+        "_robotClass": "plantWatcher",
+        "owner": "PORTAL301",
+        "contents": [
+            "3-DOF robot arm",
+            "1-DOF dolly"
+        ],
+        "state": {
+            "isClustered": true,
+            "cid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD",
+            "socketId": "----",
+            "roomId": "----"
+        }
+    },
+    "camera": {
+        "sid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD:1",
+        "spw": null,
+        "type": "CAMERA",
+        "nickname": "plantWatcher-0000:CAMERA",
+        "description": "RobotCam",
+        "owner": "PORTAL301",
+        "contents": [
             "video"
         ],
-        "motor": [
-            "7-DOF robot arm",
-            "4-DOF ground vehicle"
-        ]
-    },
-    "owner": "PORTAL301",
-    "state": {
-        "socketId": "----"
+        "state": {
+            "isClustered": true,
+            "cid": "PORTAL301/ROBOT-0000-073R-SOJW-2LMQ-DDDD",
+            "socketId": "----",
+            "roomId": "----"
+        }
     }
 }

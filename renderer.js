@@ -8,10 +8,10 @@ setButton.addEventListener('click', () => {
     window.electronAPI.ipcSendMsg("sample message");
 });
 
-window.onload = () => {
-    document.getElementById('text-box').textContent = "payload displayed here"
+// window.onload = () => {
+//     document.getElementById('text-box').textContent = "payload displayed here"
 
-    window.api.receive('fromMain', (msg) => {
-        document.getElementById('text-box').textContent = msg;
-    })
-}
+//     window.api.receive('fromMain', (msg) => {
+//         document.getElementById('text-box').textContent = msg;
+//     })
+// }

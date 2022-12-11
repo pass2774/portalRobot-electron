@@ -16,7 +16,7 @@ let exec_calibRobot = ".\\python\\dist\\calib_robot\\calib_robot.exe";
 let parameter = [""];
 
 const fs = require('fs');
-
+let _robotClass = "plantWatcher";
 
 
 
@@ -31,10 +31,10 @@ const err = fs.openSync('./out.log', 'w');
 let StringDecoder=require('string_decoder').StringDecoder;
 let decoder = new StringDecoder('utf8');
 
-function spawnChildProcess(executablePath,tag,stdoutCallback=null,stderrCallback=null){
-    const subprocess = spawn(executablePath,[],{
+function spawnChildProcess(executablePath,args=[],tag=null,stdoutCallback=null,stderrCallback=null){
+    const subprocess = spawn(executablePath,args,{
         stdio:"pipe"
-    });
+    });    
     subprocess.stdout.setEncoding('utf8');
     subprocess.stderr.setEncoding('utf8');
 
@@ -56,25 +56,30 @@ function spawnChildProcess(executablePath,tag,stdoutCallback=null,stderrCallback
     
     subprocess.on('close',(code)=>{
         console.log(`child process[${tag}] exited with code ${code}`);
-    })    
+    })
+    
+    return subprocess;
 }
 
 function handleStdoutCmdSocket(data){
     const packet = data.toString();
     console.log(`===stdout handling data===\n${packet}}`);
+    let subprocess_robot;
     if(packet.startsWith('SIG: ')){
         const obj = JSON.parse(packet.slice(5));
         if(obj["type"] === "ModeRobot"){
             if(obj["mode"] === "config"){
                 // config robot type, such as ... # of the motors, robot type, etc.
             }else if(obj["mode"] === "calibration"){
-                spawnChildProcess(exec_calibRobot,"calibRobot");
+                spawnChildProcess(exec_calibRobot,arg=[_robotClass,"home"],tag="calibRobot");
             }else if(obj["mode"] === "operation"){
-                spawnChildProcess(exec_runRobot,"runRobot");
+                subprocess_robot=spawnChildProcess(exec_runRobot,arg=[_robotClass],tag="runRobot");
             }else if(obj["mode"] === "auto"){
                 // need to block socket command (not to shut down the cmd_socket program)
-            }else if(obj["mode"] === "terminate"){
-
+            }else if(obj["mode"] === "termination"){
+                // MUST READ: https://stackoverflow.com/questions/36031465/electron-kill-child-process-exec
+                // not completely solved.
+                subprocess_robot.kill();
             }
         }
     }else if(packet.startsWith('CMD: ')){
@@ -84,15 +89,10 @@ function handleStdoutCmdSocket(data){
     }
 }
 
-spawnChildProcess(exec_initProfile,"initProfile");
-spawnChildProcess(exec_scanPorts,"scanPorts");
-spawnChildProcess(exec_cmdSocket,"cmdSocket",stdoutCallback=handleStdoutCmdSocket,stderrCallback=null);
-
-
-
-
-
-
+spawnChildProcess(exec_initProfile,[],tag="initProfile");
+spawnChildProcess(exec_scanPorts,[],tag="scanPorts");
+// spawnChildProcess(exec_cmdSocket,[],tag="cmdSocket");
+spawnChildProcess(exec_cmdSocket,[],tag="cmdSocket",stdoutCallback=handleStdoutCmdSocket,stderrCallback=null);
 
 
 
@@ -124,7 +124,8 @@ const createWindow = () => {
               console.error(err)
               return
             }
-            win.webContents.send('fromMain', data);
+            const serviceProfile = JSON.parse(data)
+            win.webContents.send('fromMain', "service-profile",serviceProfile["camera"]);
         })
 
 
