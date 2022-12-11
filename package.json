@@ -5,11 +5,16 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-packager . CSW --asar"
   },
   "author": "Portal301 Joonhwa Choi",
   "license": "ISC",
   "devDependencies": {
+    "asar": "^3.2.0",
     "electron": "^21.3.0"
+  },
+  "dependencies": {
+    "electron-packager": "^17.1.1"
   }
 }

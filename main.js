@@ -1,16 +1,13 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 let {spawn,exec} = require('node:child_process');
-// let exec_cmdSocket = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\cmd_socket\\cmd_socket.exe";
-// let exec_initProfile = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\init_profile\\init_profile.exe";
-// let exec_scanPorts = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\scan_ports\\scan_ports.exe";
-// let exec_runRobot = "C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\dist\\dxl_robot_gv\\dxl_robot_gv.exe";
 
-let exec_cmdSocket = ".\\python\\dist\\cmd_socket\\cmd_socket.exe";
-let exec_initProfile = ".\\python\\dist\\init_profile\\init_profile.exe";
-let exec_scanPorts = ".\\python\\dist\\scan_ports\\scan_ports.exe";
-let exec_runRobot = ".\\python\\dist\\dxl_robot_gv\\dxl_robot_gv.exe";
-let exec_calibRobot = ".\\python\\dist\\calib_robot\\calib_robot.exe";
+
+let exec_cmdSocket = "./python/dist/cmd_socket/cmd_socket";
+let exec_initProfile = "./python/dist/init_profile/init_profile";
+let exec_scanPorts = "./python/dist/scan_ports/scan_ports";
+let exec_runRobot = "./python/dist/run_robot/run_robot";
+let exec_calibRobot = "./python/dist/dxl_calibration/dxl_calibration";
 
 
 let parameter = [""];
@@ -61,25 +58,41 @@ function spawnChildProcess(executablePath,args=[],tag=null,stdoutCallback=null,s
     return subprocess;
 }
 
+let subprocess_robot = [];
 function handleStdoutCmdSocket(data){
     const packet = data.toString();
-    console.log(`===stdout handling data===\n${packet}}`);
-    let subprocess_robot;
+    console.log(`===stdout handling data===\n${packet}`);
     if(packet.startsWith('SIG: ')){
-        const obj = JSON.parse(packet.slice(5));
-        if(obj["type"] === "ModeRobot"){
+    	console.log(packet.slice(5));
+        const obj = JSON.parse(packet.slice(5));        
+        //const obj = JSON.parse('{"type": "modeRobot", "mode": "operation"}');
+        if(obj["type"] === "modeRobot"){
             if(obj["mode"] === "config"){
                 // config robot type, such as ... # of the motors, robot type, etc.
             }else if(obj["mode"] === "calibration"){
-                spawnChildProcess(exec_calibRobot,arg=[_robotClass,"home"],tag="calibRobot");
+            	console.log("mode:calibration")
+		const child = spawn("gnome-terminal",["--", exec_calibRobot, "plantWatcher", "home"],{
+		     stdio:"pipe"
+		})
+		subprocess_robot.push(child);
+                //spawnChildProcess(exec_calibRobot,arg=[_robotClass,"home"],tag="calibRobot");
             }else if(obj["mode"] === "operation"){
-                subprocess_robot=spawnChildProcess(exec_runRobot,arg=[_robotClass],tag="runRobot");
+            	console.log("mode:operation")
+		const child = spawn("gnome-terminal",["--", exec_runRobot, "plantWatcher"],{
+		     stdio:"pipe"
+		})
+		subprocess_robot.push(child);
+
+//                subprocess_robot=spawnChildProcess(exec_runRobot,arg=[_robotClass],tag="runRobot");
             }else if(obj["mode"] === "auto"){
                 // need to block socket command (not to shut down the cmd_socket program)
             }else if(obj["mode"] === "termination"){
                 // MUST READ: https://stackoverflow.com/questions/36031465/electron-kill-child-process-exec
                 // not completely solved.
-                subprocess_robot.kill();
+                while(subprocess_robot.length !=0){
+                	console.log(subprocess_robot);
+                	subprocess_robot.pop().kill();
+                }
             }
         }
     }else if(packet.startsWith('CMD: ')){
