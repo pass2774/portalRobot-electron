@@ -1,6 +1,6 @@
 {
     "cluster": {
-        "sid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ",
+        "sid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D",
         "spw": "0000",
         "type": "CLUSTER",
         "nickname": "plantWatcher-0000",
@@ -17,15 +17,15 @@
         },
         "state": {
             "ch0": {
-                "sid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ:0"
+                "sid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D:0"
             },
             "ch1": {
-                "sid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ:1"
+                "sid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D:1"
             }
         }
     },
     "robot": {
-        "sid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ:0",
+        "sid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D:0",
         "spw": null,
         "type": "ROBOT",
         "nickname": "plantWatcher-0000:ROBOT",
@@ -38,13 +38,13 @@
         ],
         "state": {
             "isClustered": true,
-            "cid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ",
+            "cid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D",
             "socketId": "----",
             "roomId": "----"
         }
     },
     "camera": {
-        "sid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ:1",
+        "sid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D:1",
         "spw": null,
         "type": "CAMERA",
         "nickname": "plantWatcher-0000:CAMERA",
@@ -55,7 +55,7 @@
         ],
         "state": {
             "isClustered": true,
-            "cid": "PORTAL301/CLUSTER-0000-QNP5-84RS-8K98-AQTJ",
+            "cid": "PORTAL301/CLUSTER-0000-B5H5-JFZV-XDI5-5W0D",
             "socketId": "----",
             "roomId": "----"
         }

@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 let {spawn,exec} = require('node:child_process');
-
+let killProcess = require('kill-process-by-name');
 
 let exec_cmdSocket = "./python/dist/cmd_socket/cmd_socket";
 let exec_initProfile = "./python/dist/init_profile/init_profile";
@@ -11,7 +11,6 @@ let exec_calibRobot = "./python/dist/dxl_calibration/dxl_calibration";
 
 
 let parameter = [""];
-
 const fs = require('fs');
 let _robotClass = "plantWatcher";
 
@@ -58,7 +57,8 @@ function spawnChildProcess(executablePath,args=[],tag=null,stdoutCallback=null,s
     return subprocess;
 }
 
-let subprocess_robot = [];
+let processes = [];
+let isRobotProcOccupied = false;
 function handleStdoutCmdSocket(data){
     const packet = data.toString();
     console.log(`===stdout handling data===\n${packet}`);
@@ -70,29 +70,44 @@ function handleStdoutCmdSocket(data){
             if(obj["mode"] === "config"){
                 // config robot type, such as ... # of the motors, robot type, etc.
             }else if(obj["mode"] === "calibration"){
-            	console.log("mode:calibration")
-		const child = spawn("gnome-terminal",["--", exec_calibRobot, "plantWatcher", "home"],{
-		     stdio:"pipe"
-		})
-		subprocess_robot.push(child);
-                //spawnChildProcess(exec_calibRobot,arg=[_robotClass,"home"],tag="calibRobot");
+                if(isRobotProcOccupied===false){
+                    isRobotProcOccupied= true;
+                    const child = spawn("lxterminal",["-e", exec_calibRobot, _robotClass, "home"],{
+                         stdio:"pipe",
+                    }) 
+                    setTimeout(()=>{
+                        isRobotProcOccupied= false;
+                    },5000);
+                    
+                    processes.push(child);
+                }
             }else if(obj["mode"] === "operation"){
-            	console.log("mode:operation")
-		const child = spawn("gnome-terminal",["--", exec_runRobot, "plantWatcher"],{
-		     stdio:"pipe"
-		})
-		subprocess_robot.push(child);
-
-//                subprocess_robot=spawnChildProcess(exec_runRobot,arg=[_robotClass],tag="runRobot");
+                if(isRobotProcOccupied===false){
+                    isRobotProcOccupied= true;
+//                  subprocess_robot=spawnChildProcess(exec_runRobot,arg=[_robotClass],tag="runRobot");
+//            		const child = spawn("gnome...? ",["--", exec_runRobot, "plantWatcher"],{
+                    child = spawn("lxterminal",["-e", exec_runRobot, _robotClass],{
+                         stdio:"pipe",
+                    })
+                    processes.push(child);
+                    child.on("exit",function(){
+                        console.log("exit!");
+                    });
+                }
             }else if(obj["mode"] === "auto"){
                 // need to block socket command (not to shut down the cmd_socket program)
             }else if(obj["mode"] === "termination"){
                 // MUST READ: https://stackoverflow.com/questions/36031465/electron-kill-child-process-exec
                 // not completely solved.
-                while(subprocess_robot.length !=0){
-                	console.log(subprocess_robot);
-                	subprocess_robot.pop().kill();
-                }
+                killProcess("dxl_calibration")
+                killProcess("run_robot");
+                isRobotProcOccupied = false;
+                
+                processes.forEach(function(proc){
+                  console.log(proc);
+                    proc.kill();
+                    processes.splice(processes.indexOf(proc),1);
+                });
             }
         }
     }else if(packet.startsWith('CMD: ')){
@@ -106,6 +121,7 @@ spawnChildProcess(exec_initProfile,[],tag="initProfile");
 spawnChildProcess(exec_scanPorts,[],tag="scanPorts");
 // spawnChildProcess(exec_cmdSocket,[],tag="cmdSocket");
 spawnChildProcess(exec_cmdSocket,[],tag="cmdSocket",stdoutCallback=handleStdoutCmdSocket,stderrCallback=null);
+
 
 
 
@@ -140,8 +156,6 @@ const createWindow = () => {
             const serviceProfile = JSON.parse(data)
             win.webContents.send('fromMain', "service-profile",serviceProfile["camera"]);
         })
-
-
     })
 };
  
