@@ -1,0 +1,57 @@
+{
+    "root": {
+        "type": "cambot",
+        "serialNumber": "portal301/cambot-dev0-0000-0000-0000-0000\n",
+        "password": "0000",
+        "alias": "cambot-prototype",
+        "owner": "portal301",
+        "description": "camera and robot",
+        "auth_level": "0",
+        "contents": {},
+        "state": {
+            "ch0": {
+                "sid": "XXXX-XXXX-XXXX-XXXX"
+            },
+            "ch1": {
+                "sid": "XXXX-XXXX-XXXX-XXXX"
+            }
+        }
+    },
+    "robot": {
+        "type": "robot",
+        "serialNumber": "portal301/cambot-dev0-0000-0000-0000-0000\n:0",
+        "password": "0000",
+        "alias": "cambot-prototype:robot",
+        "owner": "portal301",
+        "description": "camera and robot-robot",
+        "connectivity": {
+            "protocol": "SocketIO",
+            "version": "EIO=^4.0...?",
+            "sid": null,
+            "status": "online"
+        },
+        "_robotClass": "plantWatcher",
+        "contents": [
+            "6-DOF robot arm"
+        ],
+        "location": "Banana house, Jeju Island",
+        "created_at": "2023-08-26T16:07:24"
+    },
+    "camera": {
+        "type": "camera",
+        "serialNumber": "portal301/cambot-dev0-0000-0000-0000-0000\n:1",
+        "password": "0000",
+        "alias": "cambot-prototype:camera",
+        "owner": "portal301",
+        "description": "camera and robot-camera",
+        "contents": [
+            "video"
+        ],
+        "state": {
+            "isrooted": true,
+            "cid": "----",
+            "socketId": "----",
+            "roomId": "----"
+        }
+    }
+}

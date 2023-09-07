@@ -1,17 +1,20 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, MenuItem, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 let {spawn,exec} = require('node:child_process');
 let killProcess = require('kill-process-by-name');
-const Store = require('electron-store');
-const fs = require('fs');
-const log = require('electron-log');
-console.log = log.log;
 
-const exec_initProfile = "./python/dist/init_profile";
-const exec_runRobot = "./python/dist/sio_robots_dxl";
+let exec_cmdSocket = "./python/dist/cmd_socket/cmd_socket";
+let exec_initProfile = "./python/dist/init_profile/init_profile";
+let exec_scanPorts = "./python/dist/scan_ports/scan_ports";
+let exec_runRobot = "./python/dist/run_robot/run_robot";
+let exec_calibRobot = "./python/dist/dxl_calibration/dxl_calibration";
+
 
 let parameter = [""];
+const fs = require('fs');
 let _robotClass = "plantWatcher";
+
+
 
 // ipcMain.on('channel_name',(event, payload)=>{
 //     console.log(payload);
@@ -20,12 +23,12 @@ let _robotClass = "plantWatcher";
 
 const out = fs.openSync('./out.log', 'w');
 const err = fs.openSync('./out.log', 'w');
+
 let StringDecoder=require('string_decoder').StringDecoder;
 let decoder = new StringDecoder('utf8');
 
 function spawnChildProcess(executablePath,args=[],tag=null,stdoutCallback=null,stderrCallback=null){
     const subprocess = spawn(executablePath,args,{
-        shell:true,
         stdio:"pipe"
     });    
     subprocess.stdout.setEncoding('utf8');
@@ -114,117 +117,92 @@ function handleStdoutCmdSocket(data){
     }
 }
 
-//spawnChildProcess(exec_initProfile,[],tag="initProfile");
-//spawnChildProcess(exec_runRobot,[],tag="runRobot");
-//spawnChildProcess(exec_runRobot,[],tag="runRobot",stdoutCallback=handleStdoutCmdSocket,stderrCallback=null);
+spawnChildProcess(exec_initProfile,[],tag="initProfile");
+spawnChildProcess(exec_scanPorts,[],tag="scanPorts");
+// spawnChildProcess(exec_cmdSocket,[],tag="cmdSocket");
+spawnChildProcess(exec_cmdSocket,[],tag="cmdSocket",stdoutCallback=handleStdoutCmdSocket,stderrCallback=null);
 
 
 
-async function sendInitSetting(mainWindow) {
 
-  let serverName = 'https://api.portal301.com';
-  let initSetting = {
-    // profile : profile, // 메인에서 프로필.txt읽은 뒤 이 함수로 프로필 전달해도 될듯? 편한대로 코딩하시길
-    serverName: serverName
-  }
-  mainWindow.webContents.send('initSetting', initSetting);
+
+function handleSetTitle (event, title) {
+    const webContents = event.sender
+    const win = BrowserWindow.fromWebContents(webContents)
+    console.log("title:",title)
+    win.setTitle(title)
 }
-async function sendModuleProfile(mainWindow, profile) {
-  mainWindow.webContents.send('moduleProfile', profile);
-}
+  
+const createWindow = () => {
+    const win = new BrowserWindow({
+        width: 640,
+        height: 480,
+        webPreferences: { preload: path.join(__dirname, 'preload.js') }
+    });
+ 
+    // ipcMain.on('set-title', (event, title) => {
+    //     const webContents = event.sender
+    //     const win = BrowserWindow.fromWebContents(webContents)
+    //     win.setTitle(title)
+    //   })
+    win.loadFile('index.html');
 
-function createWindow() {
-  console.log(path.join(app.getPath('userData')));
-
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
-    }
-  })
-
-  // 콘솔 창 F12로 띄우는 기능. 필요없으면 지우셔도 됩니다.
-  globalShortcut.register('F12', () => {
-    mainWindow.webContents.toggleDevTools(); // Toggle the developer tools console
-  });
-
-  const defualtMenu = Menu.getApplicationMenu();
-  const menuItem = new MenuItem({
-    label: app.name,
-    submenu: [
-      {
-        click: () => mainWindow.webContents.send('update-counter', 1),
-        label: 'Increment',
-      },
-      {
-        click: () => mainWindow.webContents.send('update-counter', -1),
-        label: 'Decrement',
-      }
-    ]
-  });
-  defualtMenu.append(menuItem);
-
-  Menu.setApplicationMenu(defualtMenu);
-
-
-  mainWindow.loadFile('index.html');
-  mainWindow.webContents.on('did-finish-load', () => {
-    log.info('rendered finished.');
-    sendInitSetting(mainWindow);
-    fs.readFile('./python/src/config/moduleProfile.txt', 'utf8' , (err, data) => {
-      if (err) {
-        console.error(err)
-        return
-      }
-      const moduleProfile = JSON.parse(data)
-      //win.webContents.send('fromMain', "module-profile",moduleProfile["camera"]);
-      console.log("[main.js]:")
-      console.log(moduleProfile["camera"])
-      sendModuleProfile(mainWindow, moduleProfile["camera"]);
+    win.webContents.on('did-finish-load', (evt)=>{
+        fs.readFile('./python/src/config/ServiceProfile.txt', 'utf8' , (err, data) => {
+            if (err) {
+              console.error(err)
+              return
+            }
+            const serviceProfile = JSON.parse(data)
+            win.webContents.send('fromMain', "service-profile",serviceProfile["camera"]);
+        })
     })
-  });
-}
-
+};
+ 
 app.whenReady().then(() => {
-  ipcMain.handle('dialog:openFile', handleFileOpen);
-  ipcMain.on('set-title', handleSetTitle);
-
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  });
-
-})
-
+    createWindow();
+    ipcMain.on('set-title', handleSetTitle)
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+});
+ 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-  // On certificate error we disable default behaviour (stop loading the page)
-  // and we then say "it is all fine - true" to the callback
-  event.preventDefault();
-  callback(true);
+    if (process.platform !== 'darwin') app.quit();
 });
 
-function handleSetTitle(event, title) {
-  const webContents = event.sender
-  const win = BrowserWindow.fromWebContents(webContents);
-  win.setTitle(title);
 
-}
 
-async function handleFileOpen() {
-  const { canceled, filePaths } = await dialog.showOpenDialog()
-  if (canceled) {
-    return
-  } else {
-    return filePaths[0]
-  }
-}
+
+
+
+
+// filepath="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm"
+// file="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\cmd_socket.py"
+// const child = spawn("poetry",["run","python","cmd_socket.py"],{
+//     cwd:filepath,
+//     stdio:"pipe"
+// })
+
+// filepath="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm"
+// file="C:\\Users\\Portal301\\Dropbox\\PythonWorkspace\\Portal301Projects\\RobotArm\\cmd_socket.py"
+// const subprocess = exec("poetry run python cmd_socket.py",{
+//     cwd:filepath,
+//     // stdio:["inherit","inherit","pipe"],
+//     // stdio:["inherit","inherit","inherit"],
+//     encoding:'utf8',
+//     maxBuffer:1024*10
+//     // detached:true
+//     // stdio:["pipe",out,err]
+// });
+// subprocess.stdout.once("data",buffer=>{
+//     console.log("once!!",buffer);
+// })
+// subprocess.stderr.on("data",buffer=>{
+//     console.log(buffer);
+// })
+// subprocess.on('close',(code)=>{
+//     console.log(`child process exited with code ${code}`);
+// })    
+
+

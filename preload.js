@@ -1,44 +1,24 @@
-const { contextBridge, ipcRenderer } = require('electron')
-
-// contextBridge.exposeInMainWorld('electronAPI', {
-//     setTitle: (title) => ipcRenderer.send('set-title', title),
-//     ipcSendMsg: (msg) => ipcRenderer.send('ipc-msg', msg)    
-// })
-
-
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld(
-    "api", {
-        send: (channel, data) => {
-            // whitelist channels
-            let validChannels = ["toMain"];
-            if (validChannels.includes(channel)) {
-                ipcRenderer.send(channel, data);
-            }
-        },
-        receive: (channel, func) => {
-            let validChannels = ["fromMain"];
-            if (validChannels.includes(channel)) {
-                // Deliberately strip event as it includes `sender` 
-                ipcRenderer.on(channel, (event, ...args) => func(...args));
-            }
-        }
-    }
-);
-
-
-
-window.addEventListener('DOMContentLoaded', () => {
-    const replaceText = (selector, text) => {
-        const element = document.getElementById(selector)
-        if (element) element.innerText = text
-    }
- 
-    for (const type of ['chrome', 'node', 'electron']) {
-        replaceText(`${type}-version`, process.versions[type]);
-    }
+const { contextBridge, ipcRenderer } = require('electron');
+const dvName = null;
+contextBridge.exposeInMainWorld('versions', {
+  node: () => process.versions.node,
+  chrome: () => process.versions.chrome,
+  electron: () => process.versions.electron,
+  ping: () => ipcRenderer.invoke('ping'),
+  // we can also expose variables, not just functions
 });
 
+// // ❌ Bad code
+// contextBridge.exposeInMainWorld('myAPI', {
+//   send: ipcRenderer.send
+// })
 
+// ✅ Good code
+// contextBridge.exposeInMainWorld('myAPI', {
+//   loadPreferences: () => ipcRenderer.invoke('load-prefs'),
+// });
 
+contextBridge.exposeInMainWorld("portal_electron_API", {
+  initSetting: (callback) => ipcRenderer.on('initSetting', callback),
+  moduleProfile: (callback) => ipcRenderer.on('moduleProfile', callback),
+})

@@ -1,19 +1,100 @@
 {
-  "name": "electron_portalrobot",
+  "name": "farmdesk-electron",
   "version": "1.0.0",
-  "description": "operating robot system through electron",
+  "description": "Banana App of Portal301",
   "main": "main.js",
   "scripts": {
+    "start": "electron-forge start",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "deploy:osx": "electron-builder --mac",
+    "deploy:win": "npm run deploy:win32 && npm run deploy:win64",
+    "deploy:linux32": "electron-builder --linux --ia32",
+    "deploy:linux64": "electron-builder --linux --x64",
+    "deploy:win32": "electron-builder --win nsis:ia32",
+    "deploy:win64": "electron-builder --win nsis:x64"
   },
-  "author": "Portal301 Joonhwa Choi",
+  "build": {
+    "productName": "FarmDesk",
+    "appId": "net.jetalab.ex.startelectron",
+    "asar": true,
+    "mac": {
+      "target": [
+        "default"
+      ]
+    },
+    "dmg": {
+      "title": "FarmDesk"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true
+    },
+    "directories": {
+      "buildResources": "./resources/installer/",
+      "output": "./build-linux/",
+      "app": "."
+    }
+  },
+  "author": "portal301-Joonik",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^21.3.0"
+    "@electron-forge/cli": "^6.0.0-beta.68",
+    "@electron-forge/maker-deb": "^6.0.0-beta.68",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.68",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.68",
+    "@electron-forge/maker-zip": "^6.0.0-beta.68",
+    "electron": "^20.1.4",
+    "electron-builder": "^24.4.0"
   },
   "dependencies": {
-    "electron-packager": "^17.1.1",
-    "kill-process-by-name": "^1.0.5"
+    "electron-log": "^4.4.8",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.1",
+    "express": "^4.18.1",
+    "fs": "^0.0.1-security",
+    "kill-process-by-name": "^1.0.5",
+    "socket.io": "^4.7.1"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "firstelectron"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
   }
 }

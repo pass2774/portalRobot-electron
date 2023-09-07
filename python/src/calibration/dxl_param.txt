@@ -1,70 +1,28 @@
 {
-    "robotArm": {
-        "dxl-pos-control":{
+    "dxl-robot": {
+        "pos-control":{
             "0":{
-                "profile":{"acc":30,"vel":200},
-                "home":0
-            },
-            "1":{
-                "profile":{"acc":15,"vel":150},
-                "home":-30
-            },
-            "2":{
-                "profile":{"acc":20,"vel":160},
-                "home":100
-            },
-            "3":{
-                "profile":{"acc":30,"vel":300},
-                "home":0
-            },
-            "4":{
-                "profile":{"acc":30,"vel":300},
-                "home":0
-            },
-            "5":{
-                "profile":{"acc":30,"vel":300},
-                "home":0
-            },
-            "6":{
-                "profile":{"acc":20,"vel":300},
-                "home":0
-            }
-        },
-        "dxl-vel-control":{
-            "21":{
-
-            },
-            "22":{
-
-            },
-            "23":{
-
-            },
-            "24":{
-
-            }            
-        }
-    },
-    "plantWatcher": {
-        "dxl-pos-control":{
-            "0":{
+                "mode":4,
                 "profile":{"acc":5,"vel":200},
                 "home":0
             },
             "1":{
-                "profile":{"acc":2,"vel":10},
+                "mode":3,
+                "profile":{"acc":1,"vel":10},
                 "home":0
             },
             "2":{
-                "profile":{"acc":2,"vel":10},
+                "mode":3,
+                "profile":{"acc":1,"vel":10},
                 "home":0
             },
             "3":{
-                "profile":{"acc":2,"vel":10},
+                "mode":3,
+                "profile":{"acc":1,"vel":10},
                 "home":0
             }
         },
-        "dxl-vel-control":{
+        "vel-control":{
         }
     }
 }
