@@ -7,3 +7,9 @@
 
 #### Update 로그
 23.09.02 sems -> portal banana 에 맞게 수정 후 first commit   
+
+
+#### Raspberry Pi autostart option
+sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+
+https://eggwhite0.tistory.com/73
